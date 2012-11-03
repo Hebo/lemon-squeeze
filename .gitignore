@@ -1,4 +1,3 @@
 config.yml
-reciepts*
+tmp/
 .DS_Store
-log.txt

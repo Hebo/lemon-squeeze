@@ -2,23 +2,17 @@ require 'mechanize'
 require 'json'
 require 'colorize'
 require 'yaml'
+require 'trollop'
+require 'date'
 
-class Reciept
-  attr_accessor :url
+require_relative 'reciept'
 
-  def initialize(reciept)
-    @reciept = reciept
-    self.url = reciept['image']
+opts = Trollop::options do
+    opt :month, "Month (ex. 03/12)", :type => :string
   end
-  
-  def to_s
-    "%{date}: %{merchant} - %{total}" % {
-      :date => @reciept['date'],
-      :merchant => @reciept['merchant'],
-      :total => @reciept['total']
-    }
-  end
-end
+
+opts[:month] ||= Time.now.strftime('%m/%y')
+date = Date.strptime opts[:month], '%m/%y'
 
 config = YAML.load_file('config.yml')
 if config['username'].empty? or config['password'].empty?
@@ -27,9 +21,7 @@ if config['username'].empty? or config['password'].empty?
 end
 
 agent = Mechanize.new
-
 page = agent.get('https://dashboard.lemon.com/login/')
-
 login_form = page.form
 
 login_form.username = config['username']
@@ -42,10 +34,10 @@ params = {
   :count => 0,
   :page => 0,
   :pageSize => 100,
-  :month => '2012-08-01'
+  :month => date.strftime('%Y-%m-01')
 }
 
-puts "Requesting purchases...\n\n".green
+puts "Requesting purchases for month #{date.strftime('%m/%y')}...\n\n".green
 res = agent.post('https://dashboard.lemon.com/purchases/process.php', params)
 reciepts = JSON.parse(res.body)
 if !reciepts['success']
@@ -61,8 +53,15 @@ if reciepts['data']['count'].to_i > 100
   exit
 end
 
+
+# Use specific directory for month
+month_folder = "tmp/#{date}"
+FileUtils.mkdir_p(month_folder)
+FileUtils.cd(month_folder)
+
+
 puts "Found #{reciepts.length} reciepts for a total of $#{total}:".green
-log = File.open('log.txt', 'w')
+log = File.open('purchases.txt', 'w')
 reciepts['purchases'].each do |purchase|
   reciept = Reciept.new(purchase)
   log.write(reciept.to_s + "\n")

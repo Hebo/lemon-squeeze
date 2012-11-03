@@ -1,6 +1,7 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    colorize (0.5.8)
     domain_name (0.5.3)
       unf (~> 0.0.3)
     mechanize (2.5.1)
@@ -16,6 +17,7 @@ GEM
     net-http-persistent (2.7)
     nokogiri (1.5.5)
     ntlm-http (0.1.1)
+    trollop (2.0)
     unf (0.0.5)
       unf_ext
     unf_ext (0.0.5)
@@ -25,4 +27,6 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  colorize
   mechanize
+  trollop
